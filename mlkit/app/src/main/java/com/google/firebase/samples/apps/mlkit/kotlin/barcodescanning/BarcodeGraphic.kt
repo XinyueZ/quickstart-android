@@ -18,7 +18,8 @@ class BarcodeGraphic(overlay: GraphicOverlay, barcode: FirebaseVisionBarcode) :
 
     private var rectPaint: Paint
     private var barcodePaint: Paint
-    private val barcode: FirebaseVisionBarcode?
+    val barcode: FirebaseVisionBarcode?
+    private var rect: RectF? = null
 
     init {
         this.barcode = barcode
@@ -42,16 +43,19 @@ class BarcodeGraphic(overlay: GraphicOverlay, barcode: FirebaseVisionBarcode) :
         }
 
         // Draws the bounding box around the BarcodeBlock.
-        val rect = RectF(barcode.boundingBox)
-        rect.left = translateX(rect.left)
-        rect.top = translateY(rect.top)
-        rect.right = translateX(rect.right)
-        rect.bottom = translateY(rect.bottom)
-        canvas.drawRect(rect, rectPaint)
+        rect = RectF(barcode.boundingBox).apply {
+            left = translateX(left)
+            top = translateY(top)
+            right = translateX(right)
+            bottom = translateY(bottom)
+            canvas.drawRect(this, rectPaint)
 
-        // Renders the barcode at the bottom of the box.
-        barcode.rawValue?.let { value ->
-            canvas.drawText(value, rect.left, rect.bottom, barcodePaint)
+            // Renders the barcode at the bottom of the box.
+            barcode.rawValue?.let { value ->
+                canvas.drawText(value, left, bottom, barcodePaint)
+            }
         }
     }
+
+    override fun contains(x: Float, y: Float) = rect?.contains(x, y) ?: false
 }

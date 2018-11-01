@@ -52,6 +52,12 @@ class BarcodeScanningProcessor : VisionProcessorBase<List<FirebaseVisionBarcode>
             val barcode = barcodes[i]
             val barcodeGraphic = BarcodeGraphic(graphicOverlay, barcode)
             graphicOverlay.add(barcodeGraphic)
+            barcodeGraphic.setOnGraphicClickListener {
+                val bg = it as BarcodeGraphic
+                bg.barcode?.let { firebaseBarcode ->
+                    Log.d(TAG, "Clicked on barcode: ${firebaseBarcode.rawValue}")
+                }
+            }
         }
         graphicOverlay.postInvalidate()
     }

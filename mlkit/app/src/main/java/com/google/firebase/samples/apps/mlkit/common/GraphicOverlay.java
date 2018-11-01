@@ -13,15 +13,24 @@
 // limitations under the License.
 package com.google.firebase.samples.apps.mlkit.common;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Canvas;
+import android.support.annotation.MainThread;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
+import android.support.v4.util.ArrayMap;
+import android.support.v4.view.GestureDetectorCompat;
 import android.util.AttributeSet;
+import android.view.GestureDetector;
+import android.view.MotionEvent;
 import android.view.View;
 
 import com.google.android.gms.vision.CameraSource;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * A view which renders a series of custom graphics to be overlayed on top of an associated preview
@@ -50,6 +59,34 @@ public class GraphicOverlay extends View {
   private float heightScaleFactor = 1.0f;
   private int facing = CameraSource.CAMERA_FACING_BACK;
   private final List<Graphic> graphics = new ArrayList<>();
+
+  private static class GraphicOnGestureListener extends GestureDetector.SimpleOnGestureListener {
+    private final ArrayMap<Graphic, Graphic.OnGraphicClickListener> clickListeners = new ArrayMap<>();
+
+    public boolean onDown(@Nullable MotionEvent event){
+      if(event == null || clickListeners.isEmpty()) {
+      	return false;
+      } else {
+        for(Map.Entry<Graphic, Graphic.OnGraphicClickListener> entry: clickListeners.entrySet()){
+          Graphic graphic = entry.getKey();
+          if (graphic.contains(event.getX(), event.getY())) {
+            Graphic.OnGraphicClickListener listener = entry.getValue();
+            listener.onClick(graphic);
+          }
+        }
+        return true;
+      }
+    }
+  }
+
+  private final GraphicOnGestureListener graphicOverlaySimpleOnGestureListener = new GraphicOnGestureListener();
+  private final GestureDetectorCompat gestureDetector = new GestureDetectorCompat(getContext(), graphicOverlaySimpleOnGestureListener);
+
+  @SuppressLint("ClickableViewAccessibility")
+  public boolean onTouchEvent(@Nullable MotionEvent event) {
+  	gestureDetector.onTouchEvent(event);
+  	return false;
+  }
 
   /**
    * Base class for a custom graphics object to be rendered within the graphic overlay. Subclass
@@ -115,6 +152,20 @@ public class GraphicOverlay extends View {
 
     public void postInvalidate() {
       overlay.postInvalidate();
+    }
+
+    protected Boolean contains(float x, float y) {
+      return false;
+    }
+
+    public interface OnGraphicClickListener {
+      @MainThread
+      void onClick(@NonNull Graphic graphic);
+    }
+
+    @MainThread
+    public void setOnGraphicClickListener(@NonNull OnGraphicClickListener listener) {
+      overlay.graphicOverlaySimpleOnGestureListener.clickListeners.put(this, listener);
     }
   }
 

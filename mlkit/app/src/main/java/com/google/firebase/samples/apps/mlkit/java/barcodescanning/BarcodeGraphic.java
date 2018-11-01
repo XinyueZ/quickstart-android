@@ -17,6 +17,8 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.RectF;
+import android.support.annotation.Nullable;
+import android.text.TextUtils;
 
 import com.google.firebase.ml.vision.barcode.FirebaseVisionBarcode;
 import com.google.firebase.samples.apps.mlkit.common.GraphicOverlay;
@@ -31,9 +33,10 @@ public class BarcodeGraphic extends Graphic {
 
   private final Paint rectPaint;
   private final Paint barcodePaint;
-  private final FirebaseVisionBarcode barcode;
+  private @Nullable final FirebaseVisionBarcode barcode;
+  private @Nullable RectF rect = null;
 
-  BarcodeGraphic(GraphicOverlay overlay, FirebaseVisionBarcode barcode) {
+  BarcodeGraphic(GraphicOverlay overlay, @Nullable FirebaseVisionBarcode barcode) {
     super(overlay);
 
     this.barcode = barcode;
@@ -58,7 +61,7 @@ public class BarcodeGraphic extends Graphic {
     }
 
     // Draws the bounding box around the BarcodeBlock.
-    RectF rect = new RectF(barcode.getBoundingBox());
+    rect = new RectF(barcode.getBoundingBox());
     rect.left = translateX(rect.left);
     rect.top = translateY(rect.top);
     rect.right = translateX(rect.right);
@@ -66,6 +69,21 @@ public class BarcodeGraphic extends Graphic {
     canvas.drawRect(rect, rectPaint);
 
     // Renders the barcode at the bottom of the box.
-    canvas.drawText(barcode.getRawValue(), rect.left, rect.bottom, barcodePaint);
+    String barcodeValue = barcode.getRawValue();
+    if (!TextUtils.isEmpty(barcodeValue)) {
+      canvas.drawText(barcodeValue, rect.left, rect.bottom, barcodePaint);
+    }
+  }
+
+  @Override
+  protected Boolean contains(float x, float y) {
+    if (rect != null) {
+      return rect.contains(x, y);
+    }
+    return false;
+  }
+
+  @Nullable FirebaseVisionBarcode getBarcode() {
+    return barcode;
   }
 }

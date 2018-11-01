@@ -16,6 +16,7 @@ package com.google.firebase.samples.apps.mlkit.java.barcodescanning;
 import android.graphics.Bitmap;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.text.TextUtils;
 import android.util.Log;
 
 import com.google.android.gms.tasks.Task;
@@ -26,6 +27,7 @@ import com.google.firebase.ml.vision.common.FirebaseVisionImage;
 import com.google.firebase.samples.apps.mlkit.common.CameraImageGraphic;
 import com.google.firebase.samples.apps.mlkit.common.FrameMetadata;
 import com.google.firebase.samples.apps.mlkit.common.GraphicOverlay;
+import com.google.firebase.samples.apps.mlkit.common.GraphicOverlay.Graphic.OnGraphicClickListener;
 import com.google.firebase.samples.apps.mlkit.java.VisionProcessorBase;
 
 import java.io.IOException;
@@ -78,6 +80,19 @@ public class BarcodeScanningProcessor extends VisionProcessorBase<List<FirebaseV
             FirebaseVisionBarcode barcode = barcodes.get(i);
             BarcodeGraphic barcodeGraphic = new BarcodeGraphic(graphicOverlay, barcode);
             graphicOverlay.add(barcodeGraphic);
+            barcodeGraphic.setOnGraphicClickListener(new OnGraphicClickListener() {
+                @Override
+                public void onClick(@NonNull GraphicOverlay.Graphic graphic) {
+                    BarcodeGraphic bg = (BarcodeGraphic)graphic;
+                    final FirebaseVisionBarcode firebaseBarcode = bg.getBarcode();
+                    if (firebaseBarcode != null) {
+                        String barcodeValue = firebaseBarcode.getRawValue();
+                        if (!TextUtils.isEmpty(barcodeValue)) {
+                            Log.d(TAG, "Clicked on barcode: " + barcodeValue);
+                        }
+                    }
+                }
+            });
         }
         graphicOverlay.postInvalidate();
     }
